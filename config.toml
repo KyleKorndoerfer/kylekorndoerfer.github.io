@@ -1,0 +1,59 @@
+title = 'Developer Meanderings'
+baseURL = 'https://korndoerfer.dev/'
+languageCode = 'en-us'
+
+theme = "puppet"
+
+copyright = "S. Kyle Korndoerfer"
+paginate = 5
+enableEmoji = true
+
+[outputs]
+home = ["HTML", "JSON", "RSS"]
+
+[taxonomies]
+category = "categories"
+"tags" = "tags"
+"series" = "series"
+
+[markup]
+  [markup.highlight]
+    noClasses = true
+    codeFences = true
+    guessSyntax = true
+    lineNos = true
+    lineNumbersInTable = false
+	style = "monokai"
+
+[menu]
+[[menu.main]]
+identifier = "home"
+name = "Home"
+url = "/"
+weight = -100
+[[menu.main]]
+identifier = "about"
+name = "About"
+url = "/about/"
+weight = 50
+
+[params]
+#img_home = "img/home-bg.jpg"
+img_home = "img/bristol_milkyway.jpg"
+#img_home = "img/fireworks_line.jpg"
+#img_home = "img/genesee_kayak.jpg"
+#img_home = "img/gore_skiing.jpg"
+#img_home = "img/whiteface_fall.jpg"
+#img_home = "img/lakeplacid_koa.jpg"
+
+[params.sidebar]
+gravatarEmail = "kyle.korndoerfer@outlook.com"
+
+[params.social.mastodon]
+weight = 56
+icon = "fab fa-mastodon"
+"format" = "https://hachyderm.io/%v"
+"id" = "kylek"
+[params.social]
+github = "KyleKorndoerfer"
+linkedin = "KyleKorndoerfer"
