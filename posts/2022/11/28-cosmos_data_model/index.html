@@ -1,0 +1,84 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="ie=edge"><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><title>CosmosDB Data Models & Partioning | Developer Meanderings</title><meta name=description content="How you structure your data models when working with CosmosDB can make future adjustments much easier."><meta name=keywords content><meta name=twitter:card content="summary"><meta name=twitter:title content="CosmosDB Data Models & Partioning"><meta name=twitter:description content="How you structure your data models when working with CosmosDB can make future adjustments much easier."><meta property="og:title" content="CosmosDB Data Models & Partioning"><meta property="og:description" content="How you structure your data models when working with CosmosDB can make future adjustments much easier."><meta property="og:type" content="article"><meta property="og:url" content="https://korndoerfer.dev/posts/2022/11/28-cosmos_data_model/"><meta property="article:section" content="posts"><meta property="article:published_time" content="2022-11-28T00:00:00+00:00"><meta property="article:modified_time" content="2022-11-28T00:00:00+00:00"><link rel=stylesheet href=/css/bootstrap.min.css crossorigin=anonymous><link href=https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.1/css/all.min.css rel=stylesheet type=text/css><link rel=stylesheet href=/sass/main.css><link rel=stylesheet href=/zoomjs/zoom.min.css><script src=/js/lazysizes.min.js></script>
+<link rel=apple-touch-icon href=/apple-touch-icon.png><link rel="shortcut icon" href=/favicon.png type=image/x-icon><link rel="shortcut icon" href=/favicon.ico type=image/x-icon><link rel=icon href=/logo.svg sizes=any type=image/svg+xml></head><body><nav class="navbar navbar-default navbar-custom navbar-fixed-top invert"><div class=container-fluid><div class="navbar-header page-scroll"><button type=button class=navbar-toggle>
+<span class=sr-only>Toggle navigation</span>
+<span class=icon-bar></span>
+<span class=icon-bar></span>
+<span class=icon-bar></span></button>
+<a class=navbar-brand href=https://korndoerfer.dev/>Developer Meanderings</a></div><div id=huxblog_navbar><div class=navbar-collapse><ul class="nav navbar-nav navbar-right"><li><a href=/ title=Home>Home</a></li><li><a href=/about/ title=About>About</a></li><li class=search-icon><a href=javascript:void(0)><i class="fa fa-search"></i></a></li></ul></div></div></div></nav><script>var $body=document.body,$toggle=document.querySelector(".navbar-toggle"),$navbar=document.querySelector("#huxblog_navbar"),$collapse=document.querySelector(".navbar-collapse"),__HuxNav__={close:function(){$navbar.className=" ",setTimeout(function(){$navbar.className.indexOf("in")<0&&($collapse.style.height="0px")},400)},open:function(){$collapse.style.height="auto",$navbar.className+=" in"}};$toggle.addEventListener("click",function(){$navbar.className.indexOf("in")>0?__HuxNav__.close():__HuxNav__.open()}),document.addEventListener("click",function(e){if(e.target==$toggle)return;if(e.target.className=="icon-bar")return;__HuxNav__.close()})</script><div class=search-page><div class=search-icon-close-container><span class=search-icon-close><i class="fa fa-chevron-down"></i></span></div><div class="search-main container"><div class=row><div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1"><form></form><input type=text id=search-input placeholder="$ grep..."></form><div id=search-results class=mini-post-list></div></div></div></div></div><style type=text/css>header.intro-header{position:relative;background-image:url('')}</style><header class="intro-header style-text"><div class=header-mask></div><div class=container><div class=row><div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1"><div class=post-heading><div class=tags><a class=tag href=/tags/azure/ title=Azure>Azure</a>
+<a class=tag href=/tags/cosmosdb/ title=CosmosDB>CosmosDB</a></div><h1>CosmosDB Data Models & Partioning</h1><h2 class=subheading></h2><span class=meta>Posted by
+on Mon, Nov 28, 2022</span></div></div></div></div></header><article><div class=container><div class=row><div class="col-lg-8 col-lg-offset-2
+col-md-10 col-md-offset-1
+post-container"><p>A little bit of thought and effort up front can save you a lot of hassel later.</p><h2 id=the-importance-of-data-models>The importance of data models<a class=anchorjs-link href=#the-importance-of-data-models></a></h2><p>Every document in CosmosDB is required to have two properties: an <code>id</code> and a partition
+key of your choosing. Usually, defining the <code>id</code> property is a simple task&mldr; it
+is the order number or a generated unqiue identifier (UUID/GUID). However, choosing
+a partition key is often a lot harder.</p><p>Partition keys are how CosmosDB gains the ability to scale to massive amounts of
+data while still being blazingly fast at retrieving specific documents (point
+reads). A well choosen partition key balances between speed of access and your
+ability to scale nearly infintely. If you choose too narrow of a partition key,
+then you can have &lsquo;hot partition&rsquo; issues where the individual logical partition
+becomes your bottleneck, even if you have plenty of capacity. This is like having
+a room with 10 doors, but almost everyone is trying to leave through one door at
+the same time&mldr; you can&rsquo;t all fit so you must take turns which slows everything
+down. Also, an individual partition key is limited to just 20GB of data.</p><p>Importantly, the <code>id</code> and partition key properties must be defined at that moment
+you create your collection. If you choose the wrong property on your document when
+getting started, then you will need to create an entirely new collection using a
+new property for the partition key and then migrate your data to the new collection.</p><p>With so much riding on choosing the right value for your property key, you will
+most certainly not have all of the information you need when getting started and
+will make a mistake. However, if you plan for this possibility up-front you can
+help mitigate potential issues down the road.</p><h2 id=the-scenario>The scenario<a class=anchorjs-link href=#the-scenario></a></h2><p>You are modeling the online orders for a pizza chain to be stored in CosmosDB.
+After some initial discussion, you decided that your are going to use the name
+of the city as the partition key so your data model looks something like this:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-csharp data-lang=csharp><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1</span><span><span style=color:#66d9ef>public</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Order</span>
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2</span><span>{
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3</span><span>	<span style=color:#75715e>// Unique id assigned to the order</span>
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4</span><span>	<span style=color:#66d9ef>public</span> <span style=color:#66d9ef>int</span> Id { <span style=color:#66d9ef>get</span>; <span style=color:#66d9ef>set</span>; }
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5</span><span>
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6</span><span>	<span style=color:#75715e>// the city the store is located in</span>
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7</span><span>	<span style=color:#66d9ef>public</span> <span style=color:#66d9ef>string</span> City { <span style=color:#66d9ef>get</span>; <span style=color:#66d9ef>set</span>; }
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8</span><span>
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9</span><span>	<span style=color:#75715e>// other properties for the order like Total, DateOrdered, etc.</span>
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10</span><span>}
+</span></span></code></pre></div><p>Initially, this model served you quite well. You did so well in fact, that after
+several months you start to offer franchise opportunities. After expanding into
+a few different states, you suddenly run into the situation where you have a
+duplicate city name (which is actually quite common; see Rochester or Springfield).</p><p>Because of the data model defined above, you now have no choice but to create a
+new collection that uses a different property for the partition key so that you
+no longer have a collision on the <code>city</code> property. But what should we use?</p><h2 id=future-proofing-the-data-model>Future proofing the data model<a class=anchorjs-link href=#future-proofing-the-data-model></a></h2><p>A best practice for creating a CosmosDB data model is to use a property that
+wraps one or more of the properties in your data model as the partition the
+partition key. By using a wrapper peroperty, you give yourself the ability to
+adjust the partition key at any time, in place, without having to migrate your
+data to a new container (possibly resulting in downtime for the migration).</p><p>For eaxmple, if we had defined our intial data model like this:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-csharp data-lang=csharp><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1</span><span><span style=color:#66d9ef>public</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Order</span>
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2</span><span>{
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3</span><span>	<span style=color:#75715e>// Unique id assigned to the order</span>
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4</span><span>	<span style=color:#66d9ef>public</span> <span style=color:#66d9ef>int</span> Id { <span style=color:#66d9ef>get</span>; <span style=color:#66d9ef>set</span>; }
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5</span><span>
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6</span><span>	<span style=color:#75715e>// partition key that wraps one or more properties</span>
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7</span><span>	<span style=color:#66d9ef>public</span> <span style=color:#66d9ef>string</span> PartitionKey { <span style=color:#66d9ef>get</span> { <span style=color:#66d9ef>return</span> City; } }
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8</span><span>
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9</span><span>	<span style=color:#75715e>// the city the store is located in</span>
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10</span><span>	<span style=color:#66d9ef>public</span> <span style=color:#66d9ef>string</span> City { <span style=color:#66d9ef>get</span>; <span style=color:#66d9ef>set</span>; }
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11</span><span>
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12</span><span>	<span style=color:#75715e>// other properties for the order like Total, DateOrdered, etc.</span>
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13</span><span>}
+</span></span></code></pre></div><p>Then we could easily update the <code>PartitionKey</code> property to use a different value
+without having to create a new collection and migrate our data. The <em>migration</em>
+can happen in place with now downtime.</p><p>Fo example, we could update the partition key property as follows:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-csharp data-lang=csharp><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1</span><span><span style=color:#66d9ef>public</span> <span style=color:#66d9ef>string</span> PartitionKey { <span style=color:#66d9ef>get</span> { <span style=color:#66d9ef>return</span> <span style=color:#e6db74>$&#34;{City}_{State}&#34;</span>; } }
+</span></span></code></pre></div><p>This update to the data model would <strong>expand</strong> the range of key values from just
+cities to the combination of cities <strong>and</strong> states, allowing for way more partitions.
+This also has the advantage of keeping the partition key easy to remember (you
+will almost always know the city and state for a given store/order) which allows
+you to limit the number of cross-partition queries that you run keeping your costs
+lower.</p><hr style=visibility:hidden><ul class=pager><li class=next><a href=/posts/2022/12/22-custom-exception-serialization/ data-toggle=tooltip data-placement=top title="Custom Exceptions and Serialization">Next<br><span>Custom Exceptions and Serialization</span></a></li></ul><hr style=visibility:hidden></div><div class="col-lg-8 col-lg-offset-2
+col-md-10 col-md-offset-1
+sidebar-container"><section><hr class="hidden-sm hidden-xs"><h5>FEATURED TAGS</h5><div class=tags><a href=/tags/.net/>.NET</a>
+<a href=/tags/azure/>Azure</a>
+<a href=/tags/c#/>C#</a>
+<a href=/tags/cosmosdb/>CosmosDB</a>
+<a href=/tags/eventgrid/>EventGrid</a></div></section></div></div></div></article><footer><div class=container><div class=row><div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1"><ul class="list-inline text-center"><li><a href=https://github.com/KyleKorndoerfer target=_blank><span class="fa-stack fa-lg"><i class="fa fa-circle fa-stack-2x"></i>
+<i class="fab fa-github fa-stack-1x fa-inverse"></i></span></a></li><li><a href=https://linkedin.com/in/KyleKorndoerfer target=_blank><span class="fa-stack fa-lg"><i class="fa fa-circle fa-stack-2x"></i>
+<i class="fab fa-linkedin fa-stack-1x fa-inverse"></i></span></a></li><li><a href=https://hachyderm.io/kylek target=_blank><span class="fa-stack fa-lg"><i class="fa fa-circle fa-stack-2x"></i>
+<i class="fab fa-mastodon fa-stack-1x fa-inverse"></i></span></a></li></ul><p class="copyright text-muted">S. Kyle Korndoerfer<br>Powered by <a href=https://gohugo.io>Hugo</a></p></div></div></div></footer><script src=/js/jquery.min.js></script>
+<script src=/js/bootstrap.min.js crossorigin=anonymous></script>
+<script src=/js/hux-blog.min.c4ea77041cd3edbfc8b2622cd887a9a5d8760a4162d14489e36d2a3fa4c90172.js></script>
+<script src=/js/simple-jekyll-search.min.js></script>
+<script src=/js/search.min.53bce5da475b4d362500e5ce5dddfa22e20e1b9018777411d2020b4b839c9310.js></script>
+<script src=/zoomjs/zoom.min.js></script></body></html>
