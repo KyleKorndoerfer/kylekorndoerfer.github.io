@@ -51,9 +51,8 @@ gravatarEmail = "kyle.korndoerfer@outlook.com"
 
 [params.social.mastodon]
 weight = 56
-icon = "fab fa-mastodon"
 "format" = "https://hachyderm.io/%v"
-"id" = "kylek"
+"id" = "@kylek"
 [params.social]
 github = "KyleKorndoerfer"
 linkedin = "KyleKorndoerfer"
