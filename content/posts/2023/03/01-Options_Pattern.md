@@ -135,4 +135,4 @@ to `IOptions<T>`, there is also `IOptionsSnapshot<T>` (for Scoped or Transient
 scenarios) and `IOptionsMonitor<T>` that allows for dynamic updates to settings and
 selective option invalidation.
 
-Hopt that helps!
+Hope that helps!
