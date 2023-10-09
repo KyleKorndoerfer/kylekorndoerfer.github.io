@@ -5,7 +5,7 @@ tags:
   - Azure
   - Azure Event Grid
 summary: Carefully planning your events can bring large benefits later
-draft: true
+draft: false
 ---
 
 Azure Event Grid is a globally distributed, highly scalable Pub/Sub messaging service
