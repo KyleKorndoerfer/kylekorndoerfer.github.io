@@ -104,7 +104,7 @@ product currently, your might not in the future.
 This is especially helpful when your application is composed of many different 
 microservices. If it isn't, think about functional areas in your product that making
 grouping easier.
-- `Action` descibes the event that is happening, like **InventoryRestock**, or 
+- `Action` describes the event that is happening, like **InventoryRestock**, or 
 **PaymentDeclined**.
 
 Putting these together could result in and eventType similar to:
