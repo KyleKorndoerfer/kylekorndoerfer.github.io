@@ -6,7 +6,7 @@ tags:
   - C#
   - Pattern
 summary: Be careful when using C# Patterns with the not keyword
-draft: true
+draft: false
 ---
 
 Using the pattern capabilities in C# can make code more readable and easier
